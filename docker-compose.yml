@@ -1,0 +1,103 @@
+version: '2.4'
+
+services:
+
+  postgres10:
+    container_name: postgres10-db
+    hostname: postgres
+    image: 172.16.0.189:5000/postgres:10.13-loc-ita
+    volumes:
+      - ./postgres-custom-prod.conf:/etc/postgresql/postgresql.conf
+      - postgres-data:/var/lib/postgresql/data
+      - postgres-wal:/var/lib/postgresql/wal
+      - postgres-base:/var/lib/postgresql/base
+    restart: always
+    networks:
+      odoo12:
+        ipv4_address: 172.50.0.150
+    stdin_open: false
+    tty: false
+    expose:
+      - 5432
+    ports:
+      - 5432:5432/tcp
+    environment:
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_DB=postgres
+    command: -c 'config_file=/etc/postgresql/postgresql.conf'
+
+  odoo12:
+    depends_on:
+      - postgres10
+    container_name: odoo12
+    hostname: odoo
+    image: 172.16.0.189:5000/odoo12-20200701:v01
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - ./consorzioquintadimensione:/mnt/extra-addons
+      - ./odoo-custom.conf:/etc/odoo/odoo.conf
+    restart: always
+    networks:
+      odoo12:
+        ipv4_address: 172.50.0.151
+    stdin_open: false
+    tty: false
+    expose:
+      - 8069
+    ports:
+      - 8069:8069/tcp
+    environment:
+      - HOST=postgres10-db
+      - USER=odoo
+      - PASSWORD=odoo
+      - PORT=5432
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - LANG=C.UTF-8
+      - ODOO_VERSION=12.0
+      - ODOO_RC=/etc/odoo/odoo.conf
+    command: -- --addons-path /mnt/extra-addons/contrib,/mnt/extra-addons/custom --limit-time-real 1000 --limit-time-cpu 1000
+
+networks:
+
+  odoo12:
+    name: odoo12
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.50.0.0/24
+         gateway: 172.50.0.1
+
+volumes:
+
+  postgres-data:
+    name: postgres-data
+    driver: local
+    driver_opts:
+      type: none
+      device: $PWD/postgres-data
+      o: bind
+      
+  postgres-wal:
+    name: postgres-wal
+    driver: local
+    driver_opts:
+      type: none
+      device: $PWD/wal
+      o: bind
+      
+  postgres-base:
+    name: postgres-base
+    driver: local
+    driver_opts:
+      type: none
+      device: $PWD/base
+      o: bind
+
+  odoo-data:
+    name: odoo-data
+    driver: local
+    driver_opts:
+      type: none
+      device: $PWD/odoo-data
+      o: bind
