@@ -5,7 +5,7 @@ services:
   postgres10:
     container_name: postgres10-db
     hostname: postgres
-    image: 172.16.0.189:5000/postgres:10.13-loc-ita
+    image: ghcr.io/manprint/postgres10-final:latest
     volumes:
       - ./postgres-custom-prod.conf:/etc/postgresql/postgresql.conf
       - postgres-data:/var/lib/postgresql/data
@@ -32,7 +32,7 @@ services:
       - postgres10
     container_name: odoo12
     hostname: odoo
-    image: 172.16.0.189:5000/odoo12-20200701:v01
+    image: ghcr.io/manprint/odoo12-20200915:latest
     volumes:
       - odoo-data:/var/lib/odoo
       - ./consorzioquintadimensione:/mnt/extra-addons
